@@ -1,0 +1,14 @@
+Find a specific Google Sheet by name. I'll provide a sheet name (partial names work too).
+
+First use the search_spreadsheets tool with name_contains to find matching sheets.
+
+If multiple sheets match:
+- Show all matches with their IDs, owners, and last modified dates
+- Let me choose which one I want to work with
+
+If only one sheet matches:
+- Confirm it's the right one
+- Show basic info (name, ID, owner, last modified)
+- Ask what I want to do with it (read data, get info, etc.)
+
+This is perfect when I know the sheet name but need the ID for other operations.

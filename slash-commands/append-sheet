@@ -1,0 +1,20 @@
+Append new rows of data to the end of a Google Sheet. I'll provide:
+1. Spreadsheet ID or name (if name, search for it first)
+2. Range indicating the sheet and columns (like "Sheet1!A:C" or "A:C")
+3. Data to append (as a table, CSV, or structured format)
+
+Use the append_data tool with these parameters:
+- value_input_option: "USER_ENTERED" (interpret formulas and formats)
+- insert_data_option: "INSERT_ROWS" (add new rows rather than overwrite)
+
+Before appending:
+- Show me the target sheet and column range
+- Display a preview of the data that will be added
+- Confirm the append operation
+
+After appending:
+- Report how many rows were added
+- Show the range where data was inserted
+- Provide web link to view the updated sheet
+
+This is perfect for adding new records to existing data tables without overwriting anything.

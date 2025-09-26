@@ -1,0 +1,23 @@
+Get detailed information about a specific Google Sheet. I'll need the spreadsheet ID or name (if name, I'll search for it first).
+
+Use the get_spreadsheet_info tool to retrieve:
+- Basic metadata (name, creation date, last modified, size)
+- Owner and sharing information
+- List of all sheets/tabs with their properties
+- Grid properties (row/column counts)
+- Web link for direct access
+
+Present the information in a well-organized format showing:
+1. **Spreadsheet Overview**
+   - Name, ID, and web link
+   - Created and last modified dates
+   - File size and sharing status
+
+2. **Ownership & Access**
+   - Owner names and email addresses
+   - Sharing status
+
+3. **Sheets/Tabs Structure**
+   - Tab names and IDs
+   - Grid dimensions (rows × columns)
+   - Sheet types and properties

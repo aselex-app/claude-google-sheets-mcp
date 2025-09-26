@@ -1,0 +1,19 @@
+Search for specific Google Sheets using advanced filters. I can search by:
+- Name contains text
+- Owner email address
+- Created after a specific date (YYYY-MM-DD)
+- Modified after a specific date (YYYY-MM-DD)
+- Only shared spreadsheets
+
+Use the search_spreadsheets tool and ask me what criteria I want to use. Common searches:
+- "Find all sheets with 'budget' in the name"
+- "Show me sheets I created this week"
+- "Find sheets shared with me by john@company.com"
+- "Show sheets modified since 2024-01-01"
+
+Present results with:
+- Sheet names and IDs
+- Creation and modification dates
+- Owner information
+- Sharing status
+- Direct web links

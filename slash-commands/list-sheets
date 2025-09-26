@@ -1,0 +1,7 @@
+List all Google Sheets in my Google Drive. Use the list_spreadsheets tool to show:
+- Sheet names and IDs
+- Last modified dates
+- Owners and sharing status
+- Web links for easy access
+
+Sort by most recently modified and limit to 20 results unless I specify otherwise. Include both my own sheets and sheets shared with me.

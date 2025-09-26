@@ -1,0 +1,16 @@
+Write data to a Google Sheet. I'll provide you with:
+1. Spreadsheet ID or name (if name, search for it first)
+2. Range to write to (in A1 notation like "A1:C3" or "Sheet1!A1:C3")
+3. Data to write (as a table, CSV, or structured format)
+
+Use the write_range tool with these parameters:
+- value_input_option: "USER_ENTERED" (so formulas and dates are interpreted properly)
+
+Before writing:
+- Confirm the target range and data with me
+- Show me a preview of what will be written
+- Warn me if the range might overwrite existing data
+
+After writing:
+- Confirm how many cells were updated
+- Provide the web link to view the changes

@@ -1,0 +1,16 @@
+Clear data from a specific range in a Google Sheet. I'll need:
+1. Spreadsheet ID or name (if name, search for it first)
+2. Range to clear (in A1 notation like "A1:C10" or "Sheet1!A1:C10")
+
+Use the clear_range tool to remove all data from the specified range.
+
+Before clearing:
+- Show me exactly what range will be cleared
+- Ask for confirmation since this cannot be undone
+- Warn if the range appears to contain important data
+
+After clearing:
+- Confirm what range was cleared
+- Provide web link to view the updated sheet
+
+IMPORTANT: This permanently deletes data, so always confirm the operation with me first.

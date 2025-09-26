@@ -1,0 +1,12 @@
+Read data from a Google Sheet. I'll need you to ask me for:
+1. Spreadsheet ID or name (if I provide a name, search for it first)
+2. Range to read (in A1 notation like "A1:C10" or "Sheet1!A1:C10")
+
+Use the read_range tool with these parameters:
+- value_render_option: "FORMATTED_VALUE" (show formatted values by default)
+- date_time_render_option: "FORMATTED_STRING" (show dates as readable strings)
+
+Present the data in a clear table format and include:
+- The actual range that was read
+- Number of rows and columns
+- The raw data in an easy-to-read format
