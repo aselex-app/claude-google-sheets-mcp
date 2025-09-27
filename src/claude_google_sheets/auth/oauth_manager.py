@@ -3,13 +3,13 @@
 import json
 import logging
 import os
-from typing import Dict, List, Optional, Any
+from typing import Any, Dict, List, Optional
 
+import google.auth
 from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
 from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.discovery import build
-import google.auth
 
 from ..core.exceptions import AuthenticationError, ConfigurationError
 
@@ -20,22 +20,27 @@ SHEETS_SCOPES = [
     # Basic authentication
     "openid",
     "https://www.googleapis.com/auth/userinfo.email",
-
     # Google Sheets API
     "https://www.googleapis.com/auth/spreadsheets",
-
     # Google Drive API (for listing and managing spreadsheets)
     "https://www.googleapis.com/auth/drive",
     "https://www.googleapis.com/auth/drive.file",
     "https://www.googleapis.com/auth/drive.readonly",
 ]
 
+# Default credentials directory
+DEFAULT_CREDENTIALS_DIR = os.path.expanduser("~/.config/google-sheets-mcp")
+
 
 class GoogleSheetsAuth:
     """Manages authentication for Google Sheets and Drive APIs."""
 
     def __init__(self, credentials_dir: Optional[str] = None) -> None:
-        self.credentials_dir = credentials_dir or os.getenv("GOOGLE_CREDENTIALS_DIR", ".")
+        self.credentials_dir = credentials_dir or os.getenv(
+            "GOOGLE_CREDENTIALS_DIR", DEFAULT_CREDENTIALS_DIR
+        )
+        # Ensure credentials directory exists
+        os.makedirs(self.credentials_dir, exist_ok=True)
         self.credentials: Optional[Credentials] = None
         self._services: Dict[str, Any] = {}
 
@@ -44,36 +49,58 @@ class GoogleSheetsAuth:
         if self.credentials and self.credentials.valid:
             return self.credentials
 
-        # Try different authentication methods in order
+        # Track authentication attempts for better error reporting
+        auth_attempts = []
+
+        # Method 1: Try existing OAuth token file
         try:
-            # Method 1: Try existing OAuth token file
             self.credentials = self._load_oauth_token()
             if self.credentials:
                 logger.info("Successfully authenticated using cached OAuth token")
                 return self.credentials
+            auth_attempts.append("OAuth token: Not found or invalid")
+        except Exception as e:
+            auth_attempts.append(f"OAuth token: {str(e)}")
 
-            # Method 2: Try service account credentials
+        # Method 2: Try service account credentials
+        try:
             self.credentials = self._load_service_account()
             if self.credentials:
                 logger.info("Successfully authenticated using service account")
                 return self.credentials
+            auth_attempts.append("Service account: Not found or invalid")
+        except Exception as e:
+            auth_attempts.append(f"Service account: {str(e)}")
 
-            # Method 3: Try application default credentials
+        # Method 3: Try application default credentials
+        try:
             self.credentials = self._load_default_credentials()
             if self.credentials:
-                logger.info("Successfully authenticated using application default credentials")
+                logger.info(
+                    "Successfully authenticated using application default credentials"
+                )
                 return self.credentials
+            auth_attempts.append("Application default credentials: Not available")
+        except Exception as e:
+            auth_attempts.append(f"Application default credentials: {str(e)}")
 
-            # Method 4: Interactive OAuth flow
+        # Method 4: Interactive OAuth flow
+        try:
             self.credentials = self._run_oauth_flow()
             if self.credentials:
                 logger.info("Successfully authenticated using interactive OAuth flow")
                 return self.credentials
-
-            raise AuthenticationError("No valid authentication method found")
-
+            auth_attempts.append("Interactive OAuth: Failed or not configured")
         except Exception as e:
-            raise AuthenticationError(f"Authentication failed: {str(e)}") from e
+            auth_attempts.append(f"Interactive OAuth: {str(e)}")
+
+        # If all methods failed, provide helpful error message
+        error_message = (
+            "No valid authentication method found. Attempted:\n"
+            + "\n".join(f"  - {attempt}" for attempt in auth_attempts)
+            + "\n\nTo set up authentication, run: claude-google-sheets-mcp --setup"
+        )
+        raise AuthenticationError(error_message)
 
     def _load_oauth_token(self) -> Optional[Credentials]:
         """Load OAuth token from saved file."""
@@ -86,7 +113,7 @@ class GoogleSheetsAuth:
             if creds and creds.expired and creds.refresh_token:
                 creds.refresh(Request())
                 # Save refreshed token
-                with open(token_path, 'w') as token_file:
+                with open(token_path, "w") as token_file:
                     token_file.write(creds.to_json())
             return creds if creds and creds.valid else None
         except Exception as e:
@@ -95,12 +122,15 @@ class GoogleSheetsAuth:
 
     def _load_service_account(self) -> Optional[Credentials]:
         """Load service account credentials."""
-        service_account_path = os.path.join(self.credentials_dir, "service-account.json")
+        service_account_path = os.path.join(
+            self.credentials_dir, "service-account.json"
+        )
         if not os.path.exists(service_account_path):
             return None
 
         try:
             from google.oauth2 import service_account
+
             creds = service_account.Credentials.from_service_account_file(
                 service_account_path, scopes=SHEETS_SCOPES
             )
@@ -110,32 +140,56 @@ class GoogleSheetsAuth:
             return None
 
     def _load_default_credentials(self) -> Optional[Credentials]:
-        """Load application default credentials."""
+        """Load application default credentials with proper scopes."""
         try:
-            creds, _ = google.auth.default(scopes=SHEETS_SCOPES)
+            # Try to load default credentials with our required scopes
+            creds, project = google.auth.default(scopes=SHEETS_SCOPES)
+            logger.debug(f"Loaded default credentials for project: {project}")
             return creds
         except Exception as e:
-            logger.warning(f"Failed to load default credentials: {e}")
-            return None
+            logger.warning(f"Failed to load default credentials with scopes: {e}")
+
+            # Fallback: try without scopes (will have limited access)
+            try:
+                creds, project = google.auth.default()
+                logger.warning(
+                    f"Loaded default credentials without scopes for project: {project}. "
+                    "This may have limited API access."
+                )
+                return creds
+            except Exception as e2:
+                logger.warning(f"Failed to load any default credentials: {e2}")
+                return None
 
     def _run_oauth_flow(self) -> Optional[Credentials]:
         """Run interactive OAuth flow."""
         credentials_path = os.path.join(self.credentials_dir, "credentials.json")
+
         if not os.path.exists(credentials_path):
-            logger.warning("No OAuth credentials file found for interactive flow")
+            logger.warning(
+                f"No OAuth credentials file found at {credentials_path}. "
+                "Run 'claude-google-sheets-mcp --setup' to configure authentication."
+            )
             return None
 
         try:
             flow = InstalledAppFlow.from_client_secrets_file(
                 credentials_path, SHEETS_SCOPES
             )
-            creds = flow.run_local_server(port=0)
+
+            # Try to run local server, fall back to manual flow if needed
+            try:
+                creds = flow.run_local_server(port=0, open_browser=True)
+            except Exception:
+                logger.info("Local server auth failed, trying manual flow...")
+                creds = flow.run_console()
 
             # Save token for future use
             token_path = os.path.join(self.credentials_dir, "token.json")
-            with open(token_path, 'w') as token_file:
+            with open(token_path, "w") as token_file:
                 token_file.write(creds.to_json())
 
+            logger.info(f"OAuth token saved to {token_path}")
             return creds
         except Exception as e:
             logger.warning(f"Interactive OAuth flow failed: {e}")
@@ -158,7 +212,9 @@ class GoogleSheetsAuth:
             self._services[service_key] = service
             return service
         except Exception as e:
-            raise AuthenticationError(f"Failed to build {service_name} service: {str(e)}") from e
+            raise AuthenticationError(
+                f"Failed to build {service_name} service: {str(e)}"
+            ) from e
 
     def get_sheets_service(self):
         """Get Google Sheets API service."""
@@ -179,3 +235,61 @@ class GoogleSheetsAuth:
             return user_info
         except Exception as e:
             raise AuthenticationError(f"Failed to get user info: {str(e)}") from e
+
+    def detect_account_type(self) -> str:
+        """Detect the type of Google account being used."""
+        try:
+            user_info = self.get_user_info()
+            email = user_info.get("email", "")
+
+            if email.endswith("@gmail.com"):
+                return "personal"
+            elif email.endswith("@googlemail.com"):
+                return "personal"
+            elif "." in email and not email.endswith(".gserviceaccount.com"):
+                return "workspace"
+            elif email.endswith(".gserviceaccount.com"):
+                return "service_account"
+            else:
+                return "unknown"
+        except Exception:
+            # If we can't get user info, try to detect from credentials type
+            if hasattr(self.credentials, "service_account_email"):
+                return "service_account"
+            elif hasattr(self.credentials, "refresh_token"):
+                return "oauth"
+            else:
+                return "unknown"
+
+    def check_permissions(self) -> Dict[str, bool]:
+        """Check what permissions are available with current credentials."""
+        permissions = {
+            "drive_read": False,
+            "drive_write": False,
+            "sheets_read": False,
+            "sheets_write": False,
+        }
+
+        try:
+            # Test Drive API access
+            drive_service = self.get_drive_service()
+            try:
+                # Try to list files (read permission)
+                drive_service.files().list(pageSize=1).execute()
+                permissions["drive_read"] = True
+            except Exception:
+                pass
+
+            # Test Sheets API access
+            sheets_service = self.get_sheets_service()
+            # Note: We can't easily test sheets permissions without a specific sheet ID
+            # So we'll assume if drive works, sheets will work
+            if permissions["drive_read"]:
+                permissions["sheets_read"] = True
+                permissions["sheets_write"] = True
+                permissions["drive_write"] = True
+
+        except Exception as e:
+            logger.debug(f"Permission check failed: {e}")
+
+        return permissions

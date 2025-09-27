@@ -37,7 +37,7 @@ dev = [
 ]
 
 [project.scripts]
-claude-google-sheets-mcp = "claude_google_sheets.server:main"
+claude-google-sheets-mcp = "claude_google_sheets.server:cli_main"
 
 [tool.setuptools.packages.find]
 where = ["src"]

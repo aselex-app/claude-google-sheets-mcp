@@ -4,12 +4,12 @@ import json
 import logging
 from typing import Any, Dict, List, Optional
 
-from mcp.types import Tool, TextContent
 from googleapiclient.errors import HttpError
+from mcp.types import TextContent, Tool
 
 from ..auth.oauth_manager import GoogleSheetsAuth
+from ..core.exceptions import AuthenticationError, DriveAPIError
 from ..core.tool_handler import SheetsToolHandler
-from ..core.exceptions import DriveAPIError, AuthenticationError
 
 logger = logging.getLogger(__name__)
 
@@ -20,7 +20,7 @@ class ListSpreadsheetsHandler(SheetsToolHandler):
     def __init__(self, auth: GoogleSheetsAuth) -> None:
         super().__init__(
             name="list_spreadsheets",
-            description="List all Google Sheets in the user's Google Drive"
+            description="List all Google Sheets in the user's Google Drive",
         )
         self.auth = auth
 
@@ -34,20 +34,20 @@ class ListSpreadsheetsHandler(SheetsToolHandler):
                     "max_results": {
                         "type": "integer",
                         "description": "Maximum number of spreadsheets to return (default: 100)",
-                        "default": 100
+                        "default": 100,
                     },
                     "query": {
                         "type": "string",
                         "description": "Search query to filter spreadsheets by name or content",
-                        "default": ""
+                        "default": "",
                     },
                     "include_shared": {
                         "type": "boolean",
                         "description": "Include spreadsheets shared with the user (default: true)",
-                        "default": True
-                    }
-                }
-            }
+                        "default": True,
+                    },
+                },
+            },
         )
 
     async def execute(self, arguments: Dict[str, Any]) -> List[TextContent]:
@@ -73,13 +73,17 @@ class ListSpreadsheetsHandler(SheetsToolHandler):
             search_query = " and ".join(search_parts)
 
             # Execute the search
-            results = drive_service.files().list(
-                q=search_query,
-                pageSize=min(max_results, 1000),
-                fields="nextPageToken, files(id, name, createdTime, modifiedTime, owners, shared, webViewLink, size)"
-            ).execute()
+            results = (
+                drive_service.files()
+                .list(
+                    q=search_query,
+                    pageSize=min(max_results, 1000),
+                    fields="nextPageToken, files(id, name, createdTime, modifiedTime, owners, shared, webViewLink, size)",
+                )
+                .execute()
+            )
 
-            files = results.get('files', [])
+            files = results.get("files", [])
 
             if not files:
                 return self.format_success_response("No spreadsheets found.")
@@ -87,32 +91,32 @@ class ListSpreadsheetsHandler(SheetsToolHandler):
             # Format the results
             spreadsheets = []
             for file in files:
-                owners = file.get('owners', [])
-                owner_names = [owner.get('displayName', 'Unknown') for owner in owners]
+                owners = file.get("owners", [])
+                owner_names = [owner.get("displayName", "Unknown") for owner in owners]
 
                 spreadsheet_info = {
-                    "id": file['id'],
-                    "name": file['name'],
-                    "created": file.get('createdTime', 'Unknown'),
-                    "modified": file.get('modifiedTime', 'Unknown'),
+                    "id": file["id"],
+                    "name": file["name"],
+                    "created": file.get("createdTime", "Unknown"),
+                    "modified": file.get("modifiedTime", "Unknown"),
                     "owners": owner_names,
-                    "is_shared": file.get('shared', False),
-                    "web_link": file.get('webViewLink', ''),
-                    "size": file.get('size', '0')
+                    "is_shared": file.get("shared", False),
+                    "web_link": file.get("webViewLink", ""),
+                    "size": file.get("size", "0"),
                 }
                 spreadsheets.append(spreadsheet_info)
 
             # Sort by modification time (most recent first)
-            spreadsheets.sort(key=lambda x: x['modified'], reverse=True)
+            spreadsheets.sort(key=lambda x: x["modified"], reverse=True)
 
             response_data = {
                 "total_found": len(spreadsheets),
-                "spreadsheets": spreadsheets[:max_results]
+                "spreadsheets": spreadsheets[:max_results],
             }
 
             return self.format_success_response(
                 json.dumps(response_data, indent=2),
-                f"Found {len(spreadsheets)} spreadsheet(s)"
+                f"Found {len(spreadsheets)} spreadsheet(s)",
             )
 
         except HttpError as e:
@@ -127,7 +131,7 @@ class SearchSpreadsheetsHandler(SheetsToolHandler):
     def __init__(self, auth: GoogleSheetsAuth) -> None:
         super().__init__(
             name="search_spreadsheets",
-            description="Search for spreadsheets with advanced filtering options"
+            description="Search for spreadsheets with advanced filtering options",
         )
         self.auth = auth
 
@@ -140,32 +144,32 @@ class SearchSpreadsheetsHandler(SheetsToolHandler):
                 "properties": {
                     "name_contains": {
                         "type": "string",
-                        "description": "Search for spreadsheets with names containing this text"
+                        "description": "Search for spreadsheets with names containing this text",
                     },
                     "owner_email": {
                         "type": "string",
-                        "description": "Filter by owner email address"
+                        "description": "Filter by owner email address",
                     },
                     "created_after": {
                         "type": "string",
-                        "description": "Find spreadsheets created after this date (ISO format: YYYY-MM-DD)"
+                        "description": "Find spreadsheets created after this date (ISO format: YYYY-MM-DD)",
                     },
                     "modified_after": {
                         "type": "string",
-                        "description": "Find spreadsheets modified after this date (ISO format: YYYY-MM-DD)"
+                        "description": "Find spreadsheets modified after this date (ISO format: YYYY-MM-DD)",
                     },
                     "shared_only": {
                         "type": "boolean",
                         "description": "Only return shared spreadsheets",
-                        "default": False
+                        "default": False,
                     },
                     "max_results": {
                         "type": "integer",
                         "description": "Maximum number of results to return",
-                        "default": 50
-                    }
-                }
-            }
+                        "default": 50,
+                    },
+                },
+            },
         )
 
     async def execute(self, arguments: Dict[str, Any]) -> List[TextContent]:
@@ -202,32 +206,41 @@ class SearchSpreadsheetsHandler(SheetsToolHandler):
             search_query = " and ".join(search_parts)
 
             # Execute the search
-            results = drive_service.files().list(
-                q=search_query,
-                pageSize=min(max_results, 1000),
-                fields="files(id, name, createdTime, modifiedTime, owners, shared, webViewLink, parents)"
-            ).execute()
+            results = (
+                drive_service.files()
+                .list(
+                    q=search_query,
+                    pageSize=min(max_results, 1000),
+                    fields="files(id, name, createdTime, modifiedTime, owners, shared, webViewLink, parents)",
+                )
+                .execute()
+            )
 
-            files = results.get('files', [])
+            files = results.get("files", [])
 
             if not files:
-                return self.format_success_response("No spreadsheets found matching the criteria.")
+                return self.format_success_response(
+                    "No spreadsheets found matching the criteria."
+                )
 
             # Format the results
             spreadsheets = []
             for file in files:
-                owners = file.get('owners', [])
-                owner_info = [(owner.get('displayName', 'Unknown'), owner.get('emailAddress', '')) for owner in owners]
+                owners = file.get("owners", [])
+                owner_info = [
+                    (owner.get("displayName", "Unknown"), owner.get("emailAddress", ""))
+                    for owner in owners
+                ]
 
                 spreadsheet_info = {
-                    "id": file['id'],
-                    "name": file['name'],
-                    "created": file.get('createdTime', 'Unknown'),
-                    "modified": file.get('modifiedTime', 'Unknown'),
+                    "id": file["id"],
+                    "name": file["name"],
+                    "created": file.get("createdTime", "Unknown"),
+                    "modified": file.get("modifiedTime", "Unknown"),
                     "owners": owner_info,
-                    "is_shared": file.get('shared', False),
-                    "web_link": file.get('webViewLink', ''),
-                    "parent_folders": file.get('parents', [])
+                    "is_shared": file.get("shared", False),
+                    "web_link": file.get("webViewLink", ""),
+                    "parent_folders": file.get("parents", []),
                 }
                 spreadsheets.append(spreadsheet_info)
 
@@ -237,15 +250,15 @@ class SearchSpreadsheetsHandler(SheetsToolHandler):
                     "owner_email": owner_email,
                     "created_after": created_after,
                     "modified_after": modified_after,
-                    "shared_only": shared_only
+                    "shared_only": shared_only,
                 },
                 "total_found": len(spreadsheets),
-                "spreadsheets": spreadsheets
+                "spreadsheets": spreadsheets,
             }
 
             return self.format_success_response(
                 json.dumps(response_data, indent=2),
-                f"Found {len(spreadsheets)} spreadsheet(s) matching criteria"
+                f"Found {len(spreadsheets)} spreadsheet(s) matching criteria",
             )
 
         except HttpError as e:
@@ -260,7 +273,7 @@ class GetSpreadsheetInfoHandler(SheetsToolHandler):
     def __init__(self, auth: GoogleSheetsAuth) -> None:
         super().__init__(
             name="get_spreadsheet_info",
-            description="Get detailed metadata about a specific spreadsheet"
+            description="Get detailed metadata about a specific spreadsheet",
         )
         self.auth = auth
 
@@ -273,11 +286,11 @@ class GetSpreadsheetInfoHandler(SheetsToolHandler):
                 "properties": {
                     "spreadsheet_id": {
                         "type": "string",
-                        "description": "The ID of the spreadsheet to get information about"
+                        "description": "The ID of the spreadsheet to get information about",
                     }
                 },
-                "required": ["spreadsheet_id"]
-            }
+                "required": ["spreadsheet_id"],
+            },
         )
 
     async def execute(self, arguments: Dict[str, Any]) -> List[TextContent]:
@@ -288,51 +301,63 @@ class GetSpreadsheetInfoHandler(SheetsToolHandler):
 
             # Get info from Drive API
             drive_service = self.auth.get_drive_service()
-            drive_info = drive_service.files().get(
-                fileId=spreadsheet_id,
-                fields="id, name, createdTime, modifiedTime, owners, shared, webViewLink, size, parents"
-            ).execute()
+            drive_info = (
+                drive_service.files()
+                .get(
+                    fileId=spreadsheet_id,
+                    fields="id, name, createdTime, modifiedTime, owners, shared, webViewLink, size, parents",
+                )
+                .execute()
+            )
 
             # Get detailed info from Sheets API
             sheets_service = self.auth.get_sheets_service()
-            sheets_info = sheets_service.spreadsheets().get(
-                spreadsheetId=spreadsheet_id,
-                fields="properties, sheets.properties"
-            ).execute()
+            sheets_info = (
+                sheets_service.spreadsheets()
+                .get(
+                    spreadsheetId=spreadsheet_id, fields="properties, sheets.properties"
+                )
+                .execute()
+            )
 
             # Combine the information
-            owners = drive_info.get('owners', [])
-            owner_info = [(owner.get('displayName', 'Unknown'), owner.get('emailAddress', '')) for owner in owners]
+            owners = drive_info.get("owners", [])
+            owner_info = [
+                (owner.get("displayName", "Unknown"), owner.get("emailAddress", ""))
+                for owner in owners
+            ]
 
             sheets_list = []
-            for sheet in sheets_info.get('sheets', []):
-                sheet_props = sheet.get('properties', {})
-                sheets_list.append({
-                    "sheet_id": sheet_props.get('sheetId'),
-                    "title": sheet_props.get('title'),
-                    "sheet_type": sheet_props.get('sheetType', 'GRID'),
-                    "grid_properties": sheet_props.get('gridProperties', {}),
-                    "hidden": sheet_props.get('hidden', False),
-                    "tab_color": sheet_props.get('tabColor', {})
-                })
+            for sheet in sheets_info.get("sheets", []):
+                sheet_props = sheet.get("properties", {})
+                sheets_list.append(
+                    {
+                        "sheet_id": sheet_props.get("sheetId"),
+                        "title": sheet_props.get("title"),
+                        "sheet_type": sheet_props.get("sheetType", "GRID"),
+                        "grid_properties": sheet_props.get("gridProperties", {}),
+                        "hidden": sheet_props.get("hidden", False),
+                        "tab_color": sheet_props.get("tabColor", {}),
+                    }
+                )
 
             spreadsheet_info = {
-                "id": drive_info['id'],
-                "name": drive_info['name'],
-                "created": drive_info.get('createdTime', 'Unknown'),
-                "modified": drive_info.get('modifiedTime', 'Unknown'),
+                "id": drive_info["id"],
+                "name": drive_info["name"],
+                "created": drive_info.get("createdTime", "Unknown"),
+                "modified": drive_info.get("modifiedTime", "Unknown"),
                 "owners": owner_info,
-                "is_shared": drive_info.get('shared', False),
-                "web_link": drive_info.get('webViewLink', ''),
-                "size": drive_info.get('size', '0'),
-                "parent_folders": drive_info.get('parents', []),
+                "is_shared": drive_info.get("shared", False),
+                "web_link": drive_info.get("webViewLink", ""),
+                "size": drive_info.get("size", "0"),
+                "parent_folders": drive_info.get("parents", []),
                 "sheets": sheets_list,
-                "properties": sheets_info.get('properties', {})
+                "properties": sheets_info.get("properties", {}),
             }
 
             return self.format_success_response(
                 json.dumps(spreadsheet_info, indent=2),
-                f"Retrieved information for spreadsheet: {drive_info['name']}"
+                f"Retrieved information for spreadsheet: {drive_info['name']}",
             )
 
         except HttpError as e:

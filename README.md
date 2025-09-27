@@ -6,6 +6,8 @@
 
 A comprehensive Model Context Protocol (MCP) server for Google Sheets integration with Claude. This server provides intuitive access to Google Sheets operations, including spreadsheet discovery, data manipulation, and formatting - specifically optimized for Claude CLI.
 
+**🚀 One-command installation with full Claude CLI automation!**
+
 ## ✨ Features
 
 ### 🔍 **Spreadsheet Discovery**
@@ -20,28 +22,50 @@ A comprehensive Model Context Protocol (MCP) server for Google Sheets integratio
 - **Append rows** safely without overwriting existing data
 - **Clear ranges** with confirmation safeguards
 
-### 🚀 **Claude CLI Optimized**
-- **Natural language commands** - "List my budget spreadsheets"
-- **Slash commands** for power users - `/list-sheets`, `/read-sheet`, etc.
-- **Interactive workflows** with guided prompts
-- **Rich formatted responses** with direct web links
+### 🚀 **Fully Automated Setup**
+- **One-command installation** - Complete Claude CLI integration in minutes
+- **Automatic configuration** - No manual JSON editing required
+- **8 slash commands included** - `/list-sheets`, `/read-sheet`, `/write-sheet`, etc.
+- **Universal authentication** - Works with any Google account type
+- **Smart detection** - Automatically finds and configures Claude CLI
 
-### 🔐 **Robust Authentication**
-- **Multiple auth methods**: OAuth 2.0, Service Account, Application Default
+### 🔐 **Universal Authentication**
+- **Works with any Google account type**: Personal, GCP, Google Workspace/GSuite
+- **Interactive setup wizard** for guided authentication configuration
+- **Multiple auth methods**: OAuth 2.0, Service Account, Application Default Credentials
 - **Automatic token refresh** and secure caching
-- **Reuses existing Google Workspace credentials**
-- **No credential storage** in the MCP server
+- **Smart account detection** and permission checking
 
 ## 🚀 Quick Start
 
 ### Prerequisites
 
 - Python 3.11 or higher
-- Claude Desktop installed
-- Google Cloud Project with Sheets and Drive APIs enabled
-- Google API credentials (OAuth or Service Account)
+- Claude CLI installed
+- A Google account (personal, GCP, or Google Workspace/GSuite)
 
 ### Installation
+
+#### 🔥 **One-Command Setup (Recommended)**
+
+For completely automated installation including Claude CLI configuration, slash commands, and authentication setup:
+
+```bash
+git clone https://github.com/ryanrobson/claude-google-sheets-mcp.git
+cd claude-google-sheets-mcp
+./install-claude-cli.sh
+```
+
+This script will:
+- ✅ Install all dependencies
+- ⚙️ Automatically configure Claude CLI
+- 📝 Install all 8 slash commands
+- 🔐 Guide you through authentication setup
+- 🧪 Test the installation
+
+#### **Manual Installation**
+
+If you prefer step-by-step control:
 
 1. **Clone the repository**:
    ```bash
@@ -54,9 +78,13 @@ A comprehensive Model Context Protocol (MCP) server for Google Sheets integratio
    ./install.sh
    ```
 
-3. **Set up Google API credentials** (see [Authentication](#authentication) section)
+3. **Run the interactive setup wizard**:
+   ```bash
+   source venv/bin/activate
+   claude-google-sheets-mcp --setup
+   ```
 
-4. **Add to Claude Desktop configuration**:
+4. **Add to Claude CLI configuration** (manual):
    ```json
    {
      "mcpServers": {
@@ -64,21 +92,17 @@ A comprehensive Model Context Protocol (MCP) server for Google Sheets integratio
          "command": "/path/to/claude-google-sheets-mcp/venv/bin/python",
          "args": [
            "-m",
-           "claude_google_sheets.server",
-           "--credentials-dir",
-           "/path/to/your/credentials"
+           "claude_google_sheets.server"
          ]
        }
      }
    }
    ```
 
-5. **Install slash commands** (optional but recommended):
+5. **Install slash commands** (optional):
    ```bash
    ./install-slash-commands.sh
    ```
-
-6. **Restart Claude Desktop**
 
 ## 📖 Usage
 
@@ -111,24 +135,47 @@ For faster access to common operations:
 
 ## 🔐 Authentication
 
-### Option 1: OAuth 2.0 (Recommended for personal use)
+The Google Sheets MCP server supports **all Google account types** and provides an interactive setup wizard to guide you through the authentication process.
 
-1. Go to [Google Cloud Console](https://console.cloud.google.com/)
-2. Create a new project or select existing
-3. Enable Google Sheets API and Google Drive API
-4. Create OAuth 2.0 credentials (Desktop application)
-5. Download `credentials.json` to your credentials directory
+### Quick Setup (Recommended)
 
-### Option 2: Service Account (Recommended for server/team use)
+Run the interactive setup wizard:
 
-1. Go to [Google Cloud Console](https://console.cloud.google.com/)
-2. Create a service account
-3. Download the service account key as `service-account.json`
-4. Share your spreadsheets with the service account email
+```bash
+claude-google-sheets-mcp --setup
+```
 
-### Option 3: Application Default Credentials
+The wizard will:
+- Detect your account type (Personal, Google Workspace, or GCP)
+- Guide you through the appropriate authentication method
+- Test your configuration to ensure everything works
+- Provide troubleshooting tips if needed
 
-Use `gcloud auth application-default login` if you have Google Cloud SDK installed.
+### Authentication Methods
+
+#### 🔐 OAuth 2.0 (Best for personal use)
+- Access your personal Google Sheets
+- Requires one-time Google Cloud project setup
+- Interactive browser-based authentication
+- Automatic token refresh
+
+#### 🤖 Service Account (Best for automation/server use)
+- Non-interactive authentication for scripts
+- Requires sharing sheets with service account email
+- Ideal for team/organization deployments
+
+#### 🌐 Application Default Credentials (Best for GCP users)
+- Uses existing `gcloud` authentication
+- Perfect if you're already using Google Cloud Platform
+- Quick setup with: `gcloud auth application-default login --scopes="https://www.googleapis.com/auth/cloud-platform,https://www.googleapis.com/auth/spreadsheets,https://www.googleapis.com/auth/drive"`
+
+### Manual Setup (Advanced)
+
+If you prefer manual configuration, see the setup wizard prompts for detailed instructions, or place your credentials in `~/.config/google-sheets-mcp/`:
+
+- **OAuth**: `credentials.json` (from Google Cloud Console)
+- **Service Account**: `service-account.json` (service account key)
+- **Application Default**: Use `gcloud auth application-default login`
 
 ## 🛠️ Available Tools
 
@@ -236,20 +283,27 @@ See [SECURITY.md](SECURITY.md) for detailed security information.
 
 ### Common Issues
 
+**"Authentication failed"**
+- Run the setup wizard: `claude-google-sheets-mcp --setup`
+- For GCP users: Use `gcloud auth application-default login` with proper scopes
+- Check that Google Sheets and Drive APIs are enabled in your Google Cloud project
+
 **"Spreadsheet not found"**
 - Use `/list-sheets` to see available spreadsheets
-- Check spreadsheet sharing permissions
+- Check spreadsheet sharing permissions (especially for service accounts)
 - Verify the spreadsheet ID is correct
-
-**"Authentication failed"**
-- Check your credentials file exists and is valid
-- Ensure APIs are enabled in Google Cloud Console
-- Verify the credentials directory path
 
 **"Invalid range"**
 - Use A1 notation (e.g., "A1:C10", "Sheet1!A1:C10")
 - Check that the range exists in the spreadsheet
 - Include sheet name if the spreadsheet has multiple tabs
+
+**"Insufficient permissions"**
+- For Application Default Credentials, ensure you have the right scopes:
+  ```bash
+  gcloud auth application-default login --scopes="https://www.googleapis.com/auth/cloud-platform,https://www.googleapis.com/auth/spreadsheets,https://www.googleapis.com/auth/drive"
+  ```
+- For service accounts, ensure the service account email has been granted access to your spreadsheets
 
 ### Getting Help
 

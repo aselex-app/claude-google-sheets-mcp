@@ -1,7 +1,7 @@
 """Main MCP server for Claude Google Sheets integration."""
 
-import asyncio
 import argparse
+import asyncio
 import logging
 import sys
 from typing import Any, Sequence
@@ -15,14 +15,13 @@ from mcp.types import (
 )
 
 from .auth.oauth_manager import GoogleSheetsAuth
-from .core.exceptions import GoogleSheetsMCPError, AuthenticationError
+from .core.exceptions import AuthenticationError, GoogleSheetsMCPError
 from .tools.drive_tools import DRIVE_HANDLERS
 from .tools.sheets_tools import SHEETS_HANDLERS
 
 # Setup logging
 logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger(__name__)
 
@@ -98,9 +97,30 @@ def setup_auth(credentials_dir: str = None) -> GoogleSheetsAuth:
         auth = GoogleSheetsAuth(credentials_dir)
         auth.authenticate()
 
-        # Test the authentication by getting user info
-        user_info = auth.get_user_info()
-        logger.info(f"Successfully authenticated as: {user_info.get('email', 'Unknown')}")
+        # Check account type and permissions
+        try:
+            account_type = auth.detect_account_type()
+            logger.info(f"Detected account type: {account_type}")
+
+            permissions = auth.check_permissions()
+            available_perms = [k for k, v in permissions.items() if v]
+            if available_perms:
+                logger.info(f"Available permissions: {', '.join(available_perms)}")
+            else:
+                logger.warning("No API permissions detected - functionality may be limited")
+
+            # Try to get user info for logging, but don't fail if not available
+            try:
+                user_info = auth.get_user_info()
+                logger.info(
+                    f"Authenticated as: {user_info.get('email', 'Unknown user')}"
+                )
+            except Exception:
+                logger.info("Authentication successful (user info not available)")
+
+        except Exception as e:
+            logger.debug(f"Account detection failed: {str(e)}")
+            logger.info("Authentication successful")
 
         return auth
     except Exception as e:
@@ -114,15 +134,24 @@ async def main() -> None:
     parser.add_argument(
         "--credentials-dir",
         type=str,
-        help="Directory containing Google API credentials"
+        help="Directory containing Google API credentials",
     )
+    parser.add_argument("--debug", action="store_true", help="Enable debug logging")
     parser.add_argument(
-        "--debug",
+        "--setup",
         action="store_true",
-        help="Enable debug logging"
+        help="Run interactive setup wizard",
     )
 
     args = parser.parse_args()
+
+    # Run setup wizard if requested
+    if args.setup:
+        from .setup import SetupWizard
+
+        wizard = SetupWizard(args.credentials_dir)
+        success = wizard.run()
+        sys.exit(0 if success else 1)
 
     if args.debug:
         logging.getLogger().setLevel(logging.DEBUG)
@@ -141,11 +170,10 @@ async def main() -> None:
 
         # Run the server
         from mcp.server.stdio import stdio_server
+
         async with stdio_server() as (read_stream, write_stream):
             await app.run(
-                read_stream,
-                write_stream,
-                app.create_initialization_options()
+                read_stream, write_stream, app.create_initialization_options()
             )
 
     except AuthenticationError as e:

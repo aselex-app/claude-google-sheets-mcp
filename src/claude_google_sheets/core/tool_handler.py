@@ -4,7 +4,7 @@ import logging
 from abc import ABC, abstractmethod
 from typing import Any, Dict, List, Optional
 
-from mcp.types import Tool, TextContent
+from mcp.types import TextContent, Tool
 
 logger = logging.getLogger(__name__)
 
@@ -27,7 +27,9 @@ class SheetsToolHandler(ABC):
         """Execute the tool with the given arguments."""
         pass
 
-    def validate_arguments(self, arguments: Dict[str, Any], required_args: List[str]) -> None:
+    def validate_arguments(
+        self, arguments: Dict[str, Any], required_args: List[str]
+    ) -> None:
         """Validate that required arguments are present."""
         missing_args = [arg for arg in required_args if arg not in arguments]
         if missing_args:
@@ -39,7 +41,9 @@ class SheetsToolHandler(ABC):
         self.logger.error(error_message)
         return [TextContent(type="text", text=error_message)]
 
-    def format_success_response(self, data: Any, message: Optional[str] = None) -> List[TextContent]:
+    def format_success_response(
+        self, data: Any, message: Optional[str] = None
+    ) -> List[TextContent]:
         """Format a successful response."""
         if message:
             response_text = f"{message}\n\n{data}"
