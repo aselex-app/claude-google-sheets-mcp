@@ -1300,6 +1300,218 @@ class AddConditionalFormatHandler(SheetsToolHandler):
             return self.format_error_response(e)
 
 
+class AddChartHandler(SheetsToolHandler):
+    """Add a chart built from a data range on a sheet.
+
+    Перший стовпець діапазону трактуємо як вісь X (domain), решту стовпців —
+    як серії даних. Перший рядок — заголовки (headerCount=1).
+    """
+
+    # Chart types that use the `basicChart` spec; PIE uses `pieChart`.
+    _BASIC_TYPES = {"COLUMN", "BAR", "LINE", "AREA", "SCATTER"}
+
+    def __init__(self, auth: GoogleSheetsAuth) -> None:
+        super().__init__(
+            name="add_chart",
+            description=(
+                "Add a chart (COLUMN/BAR/LINE/AREA/SCATTER/PIE) built from a data "
+                "range. The first column is the X axis; the remaining columns are "
+                "data series; the first row is treated as headers."
+            ),
+        )
+        self.auth = auth
+
+    def get_tool_definition(self) -> Tool:
+        return Tool(
+            name=self.name,
+            description=self.description,
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "spreadsheet_id": {
+                        "type": "string",
+                        "description": "The ID of the spreadsheet",
+                    },
+                    "sheet_name": {
+                        "type": "string",
+                        "description": "Name of the sheet (tab) holding the data",
+                    },
+                    "chart_type": {
+                        "type": "string",
+                        "enum": ["COLUMN", "BAR", "LINE", "AREA", "SCATTER", "PIE"],
+                        "description": "Type of chart to create",
+                    },
+                    "start_row": {"type": "integer", "description": "0-based start row (inclusive)"},
+                    "end_row": {"type": "integer", "description": "0-based end row (exclusive)"},
+                    "start_column": {"type": "integer", "description": "0-based start column (inclusive)"},
+                    "end_column": {"type": "integer", "description": "0-based end column (exclusive)"},
+                    "title": {"type": "string", "description": "Optional chart title"},
+                    "anchor_row": {
+                        "type": "integer",
+                        "description": "0-based row to anchor the chart at "
+                        "(default: data start row)",
+                    },
+                    "anchor_column": {
+                        "type": "integer",
+                        "description": "0-based column to anchor the chart at "
+                        "(default: one column right of the data)",
+                    },
+                    "width": {
+                        "type": "integer",
+                        "description": "Chart width in pixels (default 600)",
+                        "default": 600,
+                    },
+                    "height": {
+                        "type": "integer",
+                        "description": "Chart height in pixels (default 371)",
+                        "default": 371,
+                    },
+                },
+                "required": [
+                    "spreadsheet_id",
+                    "sheet_name",
+                    "chart_type",
+                    "start_row",
+                    "end_row",
+                    "start_column",
+                    "end_column",
+                ],
+            },
+        )
+
+    def _source(self, sheet_id, r0, r1, c0, c1):
+        """Build a GridRange source for a chart domain/series."""
+        return {
+            "sourceRange": {
+                "sources": [
+                    {
+                        "sheetId": sheet_id,
+                        "startRowIndex": r0,
+                        "endRowIndex": r1,
+                        "startColumnIndex": c0,
+                        "endColumnIndex": c1,
+                    }
+                ]
+            }
+        }
+
+    async def execute(self, arguments: Dict[str, Any]) -> List[TextContent]:
+        try:
+            self.validate_arguments(
+                arguments,
+                [
+                    "spreadsheet_id",
+                    "sheet_name",
+                    "chart_type",
+                    "start_row",
+                    "end_row",
+                    "start_column",
+                    "end_column",
+                ],
+            )
+            spreadsheet_id = arguments["spreadsheet_id"]
+            sheet_name = arguments["sheet_name"]
+            chart_type = arguments["chart_type"]
+            r0, r1 = arguments["start_row"], arguments["end_row"]
+            c0, c1 = arguments["start_column"], arguments["end_column"]
+
+            if c1 - c0 < 2:
+                raise InvalidRangeError(
+                    "Chart needs at least 2 columns: one for the X axis (first "
+                    "column) and one or more for the data series."
+                )
+
+            sheets_service = self.auth.get_sheets_service()
+            sheet_id = resolve_sheet_id(sheets_service, spreadsheet_id, sheet_name)
+
+            domain_source = self._source(sheet_id, r0, r1, c0, c0 + 1)
+
+            if chart_type == "PIE":
+                spec: Dict[str, Any] = {
+                    "pieChart": {
+                        "legendPosition": "RIGHT_LEGEND",
+                        "domain": domain_source,
+                        "series": self._source(sheet_id, r0, r1, c0 + 1, c0 + 2),
+                    }
+                }
+            else:
+                series = [
+                    {"series": self._source(sheet_id, r0, r1, col, col + 1)}
+                    for col in range(c0 + 1, c1)
+                ]
+                spec = {
+                    "basicChart": {
+                        "chartType": chart_type,
+                        "legendPosition": "BOTTOM_LEGEND",
+                        "headerCount": 1,
+                        "domains": [{"domain": domain_source}],
+                        "series": series,
+                    }
+                }
+
+            if arguments.get("title"):
+                spec["title"] = arguments["title"]
+
+            anchor_row = arguments.get("anchor_row", r0)
+            anchor_col = arguments.get("anchor_column", c1 + 1)
+
+            result = (
+                sheets_service.spreadsheets()
+                .batchUpdate(
+                    spreadsheetId=spreadsheet_id,
+                    body={
+                        "requests": [
+                            {
+                                "addChart": {
+                                    "chart": {
+                                        "spec": spec,
+                                        "position": {
+                                            "overlayPosition": {
+                                                "anchorCell": {
+                                                    "sheetId": sheet_id,
+                                                    "rowIndex": anchor_row,
+                                                    "columnIndex": anchor_col,
+                                                },
+                                                "widthPixels": arguments.get(
+                                                    "width", 600
+                                                ),
+                                                "heightPixels": arguments.get(
+                                                    "height", 371
+                                                ),
+                                            }
+                                        },
+                                    }
+                                }
+                            }
+                        ]
+                    },
+                )
+                .execute()
+            )
+
+            chart_id = (
+                result.get("replies", [{}])[0].get("addChart", {})
+                .get("chart", {})
+                .get("chartId")
+            )
+
+            return self.format_success_response(
+                json.dumps(
+                    {
+                        "sheet": sheet_name,
+                        "chart_type": chart_type,
+                        "chart_id": chart_id,
+                    },
+                    indent=2,
+                ),
+                f"Added {chart_type} chart to '{sheet_name}'",
+            )
+        except HttpError as e:
+            _handle_http_error(e)
+        except Exception as e:
+            return self.format_error_response(e)
+
+
 # Registry of all sheet-management tool handlers
 SHEET_MANAGEMENT_HANDLERS = [
     ListSheetsHandler,
@@ -1314,4 +1526,5 @@ SHEET_MANAGEMENT_HANDLERS = [
     SortRangeHandler,
     SetDataValidationHandler,
     AddConditionalFormatHandler,
+    AddChartHandler,
 ]

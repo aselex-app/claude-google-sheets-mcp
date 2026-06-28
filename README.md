@@ -4,7 +4,7 @@
 [![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
 [![MCP Compatible](https://img.shields.io/badge/MCP-Compatible-green.svg)](https://modelcontextprotocol.io/)
 
-A comprehensive Model Context Protocol (MCP) server for Google Sheets integration with Claude. This server provides intuitive access to **26 tools** covering spreadsheet discovery, data manipulation, sheet (tab) management, batch operations, and formatting — specifically optimized for Claude CLI.
+A comprehensive Model Context Protocol (MCP) server for Google Sheets integration with Claude. This server provides intuitive access to **27 tools** covering spreadsheet discovery, data manipulation, sheet (tab) management, batch operations, formatting, and charts — specifically optimized for Claude CLI.
 
 **🚀 One-command installation with full Claude CLI automation!**
 
@@ -211,7 +211,7 @@ If you prefer manual configuration, see the setup wizard prompts for detailed in
 
 ## 🛠️ Available Tools
 
-The MCP server exposes **26 tools**. **Bold** parameters are required; the rest
+The MCP server exposes **27 tools**. **Bold** parameters are required; the rest
 are optional. All tools work within the least-privilege scopes (`spreadsheets` +
 `drive.metadata.readonly`) — no full Drive access is ever required.
 
@@ -264,6 +264,7 @@ are optional. All tools work within the least-privilege scopes (`spreadsheets` +
 | `add_conditional_format` | Colour cells when a condition is met | **spreadsheet_id**, **sheet_name**, **start_row**, **end_row**, **start_column**, **end_column**, **condition_type**, values, background_color, text_color, bold |
 | `set_data_validation` | Dropdown (one-of-list) validation rule | **spreadsheet_id**, **sheet_name**, **start_row**, **end_row**, **start_column**, **end_column**, **values**, strict, show_dropdown |
 | `sort_range` | Sort a range by one or more columns | **spreadsheet_id**, **sheet_name**, **start_row**, **end_row**, **start_column**, **end_column**, **sort_specs** (list of `{column_index, order}`) |
+| `add_chart` | Add a chart (COLUMN/BAR/LINE/AREA/SCATTER/PIE) from a data range | **spreadsheet_id**, **sheet_name**, **chart_type**, **start_row**, **end_row**, **start_column**, **end_column**, title, anchor_row, anchor_column, width, height |
 
 > Colors are hex strings (`#RRGGBB`). `number_format` is a pattern such as
 > `$#,##0.00`, `0.00%`, or `yyyy-mm-dd`.
@@ -332,7 +333,7 @@ We welcome contributions! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for guid
 - [x] **Data validation** — dropdown rules
 - [x] **Sorting** — sort ranges by columns
 - [x] **Formula reading** — read formulas, not just values
-- [ ] **Chart creation** — generate charts from data
+- [x] **Chart creation** — generate charts from data (`add_chart`)
 - [ ] **Native Tables API** — typed tables with column types
 - [ ] **Collaboration features** — comments, suggestions
 - [ ] **Export/Import** — CSV, Excel, PDF export
