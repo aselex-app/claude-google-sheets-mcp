@@ -129,14 +129,14 @@ Include the following information:
 ### Installation Security
 ```bash
 # Verify package integrity
-pip install claude-google-sheets-mcp --verify-ssl
+pip install google-sheets-mcp --verify-ssl
 
 # Use virtual environments
 python -m venv mcp-env
 source mcp-env/bin/activate
 
 # Keep dependencies updated
-pip install --upgrade claude-google-sheets-mcp
+pip install --upgrade google-sheets-mcp
 ```
 
 ### Configuration Security
@@ -146,7 +146,7 @@ pip install --upgrade claude-google-sheets-mcp
     "google-sheets": {
       "command": "/full/path/to/python",
       "args": [
-        "-m", "claude_google_sheets.server",
+        "-m", "google_sheets.server",
         "--credentials-dir", "/secure/path/to/credentials"
       ]
     }
@@ -179,7 +179,7 @@ pip install --upgrade claude-google-sheets-mcp
 
 ### Enable Debug Logging (for security investigation)
 ```bash
-python -m claude_google_sheets.server --debug --credentials-dir /path/to/creds
+python -m google_sheets.server --debug --credentials-dir /path/to/creds
 ```
 
 ### Restrict File Permissions
@@ -248,7 +248,7 @@ Security updates will be:
 - **Tagged** with severity level
 - **Backported** to supported versions when possible
 
-Subscribe to [GitHub releases](https://github.com/ryanrobson/claude-google-sheets-mcp/releases) to stay informed about security updates.
+Subscribe to [GitHub releases](https://github.com/ryanrobson/google-sheets-mcp/releases) to stay informed about security updates.
 
 ---
 

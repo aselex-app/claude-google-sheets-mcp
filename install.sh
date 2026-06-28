@@ -64,7 +64,7 @@ cat << EOF
       "command": "$(pwd)/venv/bin/python",
       "args": [
         "-m",
-        "claude_google_sheets.server",
+        "google_sheets.server",
         "--credentials-dir",
         "$CREDENTIALS_DIR"
       ]

@@ -50,7 +50,7 @@ Write-Host @"
       "command": "$((Get-Location).Path)\venv\Scripts\python.exe",
       "args": [
         "-m",
-        "claude_google_sheets.server",
+        "google_sheets.server",
         "--credentials-dir",
         "$CredentialsDir"
       ]

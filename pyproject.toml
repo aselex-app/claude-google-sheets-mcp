@@ -3,7 +3,7 @@ requires = ["setuptools>=61.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "claude-google-sheets-mcp"
+name = "google-sheets-mcp"
 version = "0.1.0"
 description = "A Model Context Protocol (MCP) server for Google Sheets integration with Claude"
 authors = [
@@ -35,7 +35,7 @@ dev = [
 ]
 
 [project.scripts]
-claude-google-sheets-mcp = "claude_google_sheets.server:cli_main"
+google-sheets-mcp = "google_sheets.server:cli_main"
 
 [tool.setuptools.packages.find]
 where = ["src"]

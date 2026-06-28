@@ -121,7 +121,7 @@ class GoogleSheetsAuth:
         error_message = (
             "No valid authentication method found. Attempted:\n"
             + "\n".join(f"  - {attempt}" for attempt in auth_attempts)
-            + "\n\nTo set up authentication, run: claude-google-sheets-mcp --setup"
+            + "\n\nTo set up authentication, run: google-sheets-mcp --setup"
         )
         raise AuthenticationError(error_message)
 
@@ -184,7 +184,7 @@ class GoogleSheetsAuth:
         if not os.path.exists(credentials_path):
             logger.warning(
                 f"No OAuth credentials file found at {credentials_path}. "
-                "Run 'claude-google-sheets-mcp --setup' to configure authentication."
+                "Run 'google-sheets-mcp --setup' to configure authentication."
             )
             return None
 

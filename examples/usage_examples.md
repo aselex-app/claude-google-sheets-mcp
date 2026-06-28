@@ -8,8 +8,8 @@ This document provides practical examples of using the Claude Google Sheets MCP 
 
 ```bash
 # Clone and install
-git clone https://github.com/ryanrobson/claude-google-sheets-mcp.git
-cd claude-google-sheets-mcp
+git clone https://github.com/aselex-app/google-sheets-mcp.git
+cd google-sheets-mcp
 ./install.sh
 
 # Install slash commands
@@ -64,6 +64,127 @@ Claude: I'll search for spreadsheets containing "project" modified this month.
 User: Tell me about my expense tracking spreadsheet
 Claude: I'll get detailed information about your expense tracking spreadsheet.
 [Shows metadata, sheets, structure, etc.]
+```
+
+## 🆕 Working with the Full Toolset (26 tools)
+
+The examples above cover the basics. Below are natural-language prompts for the
+extended tools — creating spreadsheets, managing tabs, batch operations, and
+formatting. Claude picks the right tool automatically; you don't need to name it.
+
+### Creating spreadsheets & managing tabs
+
+**Create a new spreadsheet with named tabs:**
+```
+User: Create a new spreadsheet called "2026 Campaigns" with tabs "Q1", "Q2", "Q3", "Q4"
+Claude: [uses create_spreadsheet, returns the new spreadsheet URL + ID]
+```
+
+**Rename the whole file:**
+```
+User: Rename spreadsheet <id> to "2026 Campaigns — FINAL"
+Claude: [uses rename_spreadsheet]
+```
+
+**Work with tabs (sheets):**
+```
+User: List the tabs in <id>
+User: Add a tab called "Summary" to <id>
+User: Duplicate the "Q1" tab and call the copy "Q1 backup"
+User: Rename the "Sheet1" tab to "Raw data"
+User: Delete the "Old" tab from <id>
+User: Copy the "Summary" tab from <id> into spreadsheet <other-id>
+```
+
+### Batch operations (efficient, single request)
+
+**Read several ranges at once:**
+```
+User: From <id>, read A1:E1 (headers), the totals in G1:G10, and Summary!A1:B5
+Claude: [uses batch_get_values]
+```
+
+**Write several ranges at once:**
+```
+User: In <id>, set A1 to "Report", B1 to "=TODAY()", and fill A3:C3 with the column headers Name, Spend, ROAS
+Claude: [uses batch_update_values]
+```
+
+### Insert / delete rows & columns
+
+```
+User: Insert 3 empty rows at the top of the "Data" tab in <id>
+User: Delete column C from the "Data" tab in <id>
+```
+> Indices are 0-based — "the top" means start_index 0; column C is index 2.
+
+### Formulas & search
+
+**Read formulas instead of values:**
+```
+User: Show me the actual formulas in D2:D20 of <id>, not the results
+Claude: [uses get_sheet_formulas]
+```
+
+**Find without changing anything:**
+```
+User: Find every cell containing "Pending" in <id>
+Claude: [uses find_cells — returns sheet + cell address + value]
+```
+
+**Find & replace:**
+```
+User: In the "Status" tab of <id>, replace every "Draft" with "In Review"
+Claude: [uses find_replace — reports how many cells changed]
+```
+
+### Formatting, validation & sorting
+
+**Format a header row:**
+```
+User: In <id> on the "Report" tab, make the header row (row 1, columns A–E) bold,
+white text on a dark blue background, centered
+Claude: [uses format_cells]
+```
+
+**Number / currency / percent formatting:**
+```
+User: Format C2:C100 in <id> as currency ($#,##0.00)
+User: Format E2:E100 in <id> as a percentage with 2 decimals
+```
+
+**Conditional formatting:**
+```
+User: In <id> on "Report", highlight cells in E2:E50 green when the value is greater than 150
+Claude: [uses add_conditional_format]
+```
+
+**Dropdown (data validation):**
+```
+User: In <id> on "Report", make D2:D50 a dropdown with the options Published, In Review, Draft, Archived
+Claude: [uses set_data_validation]
+```
+
+**Sort a range:**
+```
+User: In <id> on "Report", sort A2:E50 by column E (Clicks) descending
+Claude: [uses sort_range]
+```
+
+### End-to-end workflow example
+
+```
+User: Build me a campaign tracker in a new spreadsheet:
+  - tab "Campaigns" with columns Campaign, Status, Spend, ROAS
+  - add 5 sample rows
+  - make the header bold on a dark background
+  - turn Status into a dropdown (Active, Paused, Ended)
+  - highlight ROAS > 3 in green
+  - sort by Spend descending
+
+Claude: [chains create_spreadsheet → write_range → format_cells →
+         set_data_validation → add_conditional_format → sort_range,
+         then returns the spreadsheet link]
 ```
 
 ## ⚡ Slash Command Examples
@@ -235,7 +356,7 @@ User: Get my weekly sales data from ranges A1:E7 and summary from G1:I5, then cr
 ```bash
 # Test authentication
 python -c "
-from src.claude_google_sheets.auth.oauth_manager import GoogleSheetsAuth
+from src.google_sheets.auth.oauth_manager import GoogleSheetsAuth
 auth = GoogleSheetsAuth('/path/to/credentials')
 print(auth.get_user_info())
 "
@@ -256,7 +377,7 @@ Name: Budget
 
 ```bash
 # Run with debug logging
-python -m claude_google_sheets.server --debug --credentials-dir /path/to/creds
+python -m google_sheets.server --debug --credentials-dir /path/to/creds
 ```
 
 ## 📊 Data Format Examples
@@ -318,8 +439,8 @@ export GOOGLE_APPLICATION_CREDENTIALS="~/.config/google-sheets-mcp/service-accou
 {
   "mcpServers": {
     "google-sheets": {
-      "command": "/path/to/claude-google-sheets-mcp/venv/bin/python",
-      "args": ["-m", "claude_google_sheets.server", "--credentials-dir", "/path/to/creds"]
+      "command": "/path/to/google-sheets-mcp/venv/bin/python",
+      "args": ["-m", "google_sheets.server", "--credentials-dir", "/path/to/creds"]
     },
     "weather": {
       "command": "weather-mcp-server"
@@ -338,8 +459,8 @@ User: Get today's weather and add it to my weather tracking spreadsheet
 ```python
 # Python script example
 import asyncio
-from claude_google_sheets.tools.sheets_tools import AppendDataHandler
-from claude_google_sheets.auth.oauth_manager import GoogleSheetsAuth
+from google_sheets.tools.sheets_tools import AppendDataHandler
+from google_sheets.auth.oauth_manager import GoogleSheetsAuth
 
 async def daily_backup():
     auth = GoogleSheetsAuth("/path/to/creds")

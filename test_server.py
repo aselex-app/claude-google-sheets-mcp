@@ -10,10 +10,11 @@ import json
 # Add the source directory to the Python path
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'src'))
 
-from claude_google_sheets.server import initialize_handlers
-from claude_google_sheets.auth.oauth_manager import GoogleSheetsAuth
-from claude_google_sheets.tools.drive_tools import DRIVE_HANDLERS
-from claude_google_sheets.tools.sheets_tools import SHEETS_HANDLERS
+from google_sheets.server import initialize_handlers
+from google_sheets.auth.oauth_manager import GoogleSheetsAuth
+from google_sheets.tools.drive_tools import DRIVE_HANDLERS
+from google_sheets.tools.sheets_tools import SHEETS_HANDLERS
+from google_sheets.tools.sheet_management_tools import SHEET_MANAGEMENT_HANDLERS
 
 
 async def test_tool_definitions():
@@ -47,6 +48,18 @@ async def test_tool_definitions():
         assert tool_def.description
         assert tool_def.inputSchema
 
+    # Test sheet-management handlers
+    print(f"Testing {len(SHEET_MANAGEMENT_HANDLERS)} sheet-management handlers...")
+    for handler_class in SHEET_MANAGEMENT_HANDLERS:
+        handler = handler_class(auth)
+        tool_def = handler.get_tool_definition()
+        print(f"  ✓ {handler.name}: {tool_def.description}")
+
+        # Validate tool definition structure
+        assert tool_def.name == handler.name
+        assert tool_def.description
+        assert tool_def.inputSchema
+
     print("All tool definitions are valid!")
 
 
@@ -55,7 +68,7 @@ async def test_server_import():
     print("Testing server import...")
 
     try:
-        from claude_google_sheets.server import app, tool_handlers
+        from google_sheets.server import app, tool_handlers
         print("  ✓ Server module imported successfully")
 
         # Test that we can create the auth manager (without actual authentication)
@@ -85,7 +98,7 @@ async def test_error_handling():
     auth = GoogleSheetsAuth()
 
     # Test with missing required arguments
-    from claude_google_sheets.tools.drive_tools import ListSpreadsheetsHandler
+    from google_sheets.tools.drive_tools import ListSpreadsheetsHandler
     handler = ListSpreadsheetsHandler(auth)
 
     try:

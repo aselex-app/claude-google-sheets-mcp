@@ -123,7 +123,7 @@ try:
     existing.setdefault("mcpServers", {})
     existing["mcpServers"]["google-sheets"] = {
         "command": mcp_python,
-        "args": ["-m", "claude_google_sheets.server"],
+        "args": ["-m", "google_sheets.server"],
     }
 
     with open(config_path, "w") as f:
@@ -177,12 +177,12 @@ setup_authentication() {
 
     source venv/bin/activate
 
-    if python3 -m claude_google_sheets.server --setup; then
+    if python3 -m google_sheets.server --setup; then
         echo "✅ Authentication setup completed"
         return 0
     else
         echo "⚠️  Authentication setup was skipped or failed"
-        echo "   You can run it later with: claude-google-sheets-mcp --setup"
+        echo "   You can run it later with: google-sheets-mcp --setup"
         return 1
     fi
 }
@@ -198,7 +198,7 @@ test_installation() {
         echo "✅ Server test passed"
     else
         echo "⚠️  Server test failed - this may be due to authentication"
-        echo "   Run: claude-google-sheets-mcp --setup"
+        echo "   Run: google-sheets-mcp --setup"
     fi
 }
 
@@ -277,7 +277,7 @@ main() {
     echo
     if [[ "$1" == "--auto" ]] || [[ "$1" == "-y" ]]; then
         echo "⏭️  Skipping authentication setup in automatic mode"
-        echo "   Run later with: claude-google-sheets-mcp --setup"
+        echo "   Run later with: google-sheets-mcp --setup"
     else
         read -p "🔐 Run authentication setup now? (Y/n): " -n 1 -r
         echo
@@ -285,7 +285,7 @@ main() {
             setup_authentication
         else
             echo "⏭️  Skipping authentication setup"
-            echo "   You can run it later with: claude-google-sheets-mcp --setup"
+            echo "   You can run it later with: google-sheets-mcp --setup"
         fi
     fi
 
@@ -302,7 +302,7 @@ main() {
     if [ -f "$CREDENTIALS_DIR/token.json" ] || [ -f "$CREDENTIALS_DIR/service-account.json" ]; then
         echo "  ✅ Authentication configured"
     else
-        echo "  ⚠️  Authentication not configured (run: claude-google-sheets-mcp --setup)"
+        echo "  ⚠️  Authentication not configured (run: google-sheets-mcp --setup)"
     fi
     echo
     echo "🚀 Ready to use! Try these commands:"

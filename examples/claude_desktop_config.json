@@ -1,10 +1,10 @@
 {
   "mcpServers": {
     "google-sheets": {
-      "command": "/path/to/claude-google-sheets-mcp/venv/bin/python",
+      "command": "/path/to/google-sheets-mcp/venv/bin/python",
       "args": [
         "-m",
-        "claude_google_sheets.server",
+        "google_sheets.server",
         "--credentials-dir",
         "/path/to/your/credentials"
       ]

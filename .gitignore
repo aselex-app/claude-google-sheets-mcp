@@ -97,3 +97,5 @@ docs/_build/
 # Personal/local usage notes (may contain private spreadsheet IDs)
 USAGE_UA.md
 client_secret_*.json
+# Cloned reference repos for analysis (not part of our codebase)
+analysis/repos/

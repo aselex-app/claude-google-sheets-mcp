@@ -7,8 +7,8 @@ Thank you for your interest in contributing! This document provides guidelines f
 1. **Fork the repository** on GitHub
 2. **Clone your fork** locally:
    ```bash
-   git clone https://github.com/YOUR_USERNAME/claude-google-sheets-mcp.git
-   cd claude-google-sheets-mcp
+   git clone https://github.com/YOUR_USERNAME/google-sheets-mcp.git
+   cd google-sheets-mcp
    ```
 3. **Set up development environment**:
    ```bash
@@ -83,7 +83,7 @@ mypy src/
 ### Project Structure
 
 ```
-src/claude_google_sheets/
+src/google_sheets/
 ├── auth/                    # Authentication management
 │   ├── __init__.py
 │   └── oauth_manager.py     # Google OAuth handling

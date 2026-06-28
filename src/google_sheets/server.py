@@ -4,7 +4,7 @@ import argparse
 import asyncio
 import logging
 import sys
-from typing import Any, Sequence
+from typing import Any, Dict, Sequence
 
 from mcp.server import Server
 from mcp.types import (
@@ -16,7 +16,9 @@ from mcp.types import (
 
 from .auth.oauth_manager import GoogleSheetsAuth
 from .core.exceptions import AuthenticationError, GoogleSheetsMCPError
+from .core.tool_handler import SheetsToolHandler
 from .tools.drive_tools import DRIVE_HANDLERS
+from .tools.sheet_management_tools import SHEET_MANAGEMENT_HANDLERS
 from .tools.sheets_tools import SHEETS_HANDLERS
 
 # Setup logging
@@ -26,11 +28,11 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 # Create MCP server instance
-app = Server("claude-google-sheets-mcp")
+app = Server("google-sheets-mcp")
 
 # Global variables
 auth_manager: GoogleSheetsAuth = None
-tool_handlers = {}
+tool_handlers: Dict[str, SheetsToolHandler] = {}
 
 
 def initialize_handlers(auth: GoogleSheetsAuth) -> None:
@@ -48,6 +50,12 @@ def initialize_handlers(auth: GoogleSheetsAuth) -> None:
         handler = handler_class(auth)
         tool_handlers[handler.name] = handler
         logger.info(f"Registered sheets tool: {handler.name}")
+
+    # Initialize sheet (tab) management handlers
+    for handler_class in SHEET_MANAGEMENT_HANDLERS:
+        handler = handler_class(auth)
+        tool_handlers[handler.name] = handler
+        logger.info(f"Registered sheet-management tool: {handler.name}")
 
 
 @app.list_tools()

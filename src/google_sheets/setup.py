@@ -290,7 +290,7 @@ def setup_command(credentials_dir: Optional[str]):
         click.echo("🎉 Setup completed successfully!")
         click.echo()
         click.echo("You can now use the Google Sheets MCP server:")
-        click.echo("  claude-google-sheets-mcp")
+        click.echo("  google-sheets-mcp")
         click.echo()
         click.echo("Or in Claude CLI:")
         click.echo("  'List my recent spreadsheets'")
