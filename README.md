@@ -51,8 +51,8 @@ A comprehensive Model Context Protocol (MCP) server for Google Sheets integratio
 For completely automated installation including Claude CLI configuration, slash commands, and authentication setup:
 
 ```bash
-git clone https://github.com/aselex-app/claude-google-sheets-mcp.git
-cd claude-google-sheets-mcp
+git clone https://github.com/aselex-app/google-sheets-mcp.git
+cd google-sheets-mcp
 ./install-claude-cli.sh
 ```
 
@@ -69,8 +69,8 @@ If you prefer step-by-step control:
 
 1. **Clone the repository**:
    ```bash
-   git clone https://github.com/aselex-app/claude-google-sheets-mcp.git
-   cd claude-google-sheets-mcp
+   git clone https://github.com/aselex-app/google-sheets-mcp.git
+   cd google-sheets-mcp
    ```
 
 2. **Install the server**:
@@ -89,7 +89,7 @@ If you prefer step-by-step control:
    {
      "mcpServers": {
        "google-sheets": {
-         "command": "/path/to/claude-google-sheets-mcp/venv/bin/python",
+         "command": "/path/to/google-sheets-mcp/venv/bin/python",
          "args": [
            "-m",
            "claude_google_sheets.server"
@@ -210,7 +210,7 @@ The MCP server exposes these tools:
 ## 🏗️ Architecture
 
 ```
-claude-google-sheets-mcp/
+google-sheets-mcp/
 ├── src/claude_google_sheets/
 │   ├── auth/                 # Authentication management
 │   ├── tools/               # MCP tool implementations
@@ -226,8 +226,8 @@ claude-google-sheets-mcp/
 ### Setup Development Environment
 
 ```bash
-git clone https://github.com/aselex-app/claude-google-sheets-mcp.git
-cd claude-google-sheets-mcp
+git clone https://github.com/aselex-app/google-sheets-mcp.git
+cd google-sheets-mcp
 python -m venv venv
 source venv/bin/activate  # On Windows: venv\Scripts\activate
 pip install -e ".[dev]"
@@ -329,7 +329,7 @@ See [SECURITY.md](SECURITY.md) for detailed security information.
 
 ### Getting Help
 
-1. Check the [Issues](https://github.com/aselex-app/claude-google-sheets-mcp/issues) page
+1. Check the [Issues](https://github.com/aselex-app/google-sheets-mcp/issues) page
 2. Review [SLASH_COMMANDS.md](SLASH_COMMANDS.md) for usage examples
 3. Enable debug logging: `--debug` flag
 4. Join discussions in the repository
@@ -347,9 +347,9 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 📞 Support
 
-- 🐛 **Bug Reports**: [GitHub Issues](https://github.com/aselex-app/claude-google-sheets-mcp/issues)
-- 💬 **Discussions**: [GitHub Discussions](https://github.com/aselex-app/claude-google-sheets-mcp/discussions)
-- 📖 **Documentation**: [Wiki](https://github.com/aselex-app/claude-google-sheets-mcp/wiki)
+- 🐛 **Bug Reports**: [GitHub Issues](https://github.com/aselex-app/google-sheets-mcp/issues)
+- 💬 **Discussions**: [GitHub Discussions](https://github.com/aselex-app/google-sheets-mcp/discussions)
+- 📖 **Documentation**: [Wiki](https://github.com/aselex-app/google-sheets-mcp/wiki)
 
 ---
 
