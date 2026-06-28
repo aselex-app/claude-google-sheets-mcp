@@ -66,7 +66,7 @@ Claude: I'll get detailed information about your expense tracking spreadsheet.
 [Shows metadata, sheets, structure, etc.]
 ```
 
-## 🆕 Working with the Full Toolset (26 tools)
+## 🆕 Working with the Full Toolset (27 tools)
 
 The examples above cover the basics. Below are natural-language prompts for the
 extended tools — creating spreadsheets, managing tabs, batch operations, and
@@ -169,6 +169,12 @@ Claude: [uses set_data_validation]
 ```
 User: In <id> on "Report", sort A2:E50 by column E (Clicks) descending
 Claude: [uses sort_range]
+```
+
+**Add a chart:**
+```
+User: In <id> on "Report", make a column chart from A1:B8 titled "Clicks by board"
+Claude: [uses add_chart — first column is the X axis, the rest are series]
 ```
 
 ### End-to-end workflow example
